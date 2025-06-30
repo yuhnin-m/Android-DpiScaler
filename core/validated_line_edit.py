@@ -1,0 +1,20 @@
+from PySide6.QtWidgets import QLineEdit
+
+
+class ValidatedLineEdit(QLineEdit):
+    def focusOutEvent(self, event):
+        super().focusOutEvent(event)
+        text = self.text().strip()
+        try:
+            value = float(text)
+            if 0.1 <= value <= 10.0:
+                self.setStyleSheet("")
+                self.setToolTip("")
+            else:
+                self._mark_invalid()
+        except ValueError:
+            self._mark_invalid()
+
+    def _mark_invalid(self):
+        self.setStyleSheet("border: 2px solid red; border-radius: 4px;")
+        self.setToolTip("Введите число от 0.1 до 10.0 — это масштаб относительно xxxhdpi")
