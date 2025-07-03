@@ -1,15 +1,14 @@
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QLabel, QPushButton, QFileDialog, QSizePolicy
+    QWidget, QVBoxLayout, QLabel, QPushButton,
+    QFileDialog, QSizePolicy, QStackedLayout, QFrame
 )
 from PySide6.QtGui import QPixmap, QDragEnterEvent, QDropEvent, QImageReader
 from PySide6.QtCore import Qt, Signal
-
 import os
 
 ACCEPTED_FORMATS = (".png", ".jpg", ".jpeg", ".webp")
 
 class ImageDropWidget(QWidget):
-    # отправляем имя файла
     image_loaded = Signal(str)
 
     def __init__(self, parent=None):
@@ -17,43 +16,64 @@ class ImageDropWidget(QWidget):
         self.setAcceptDrops(True)
         self.image_path = None
 
+        # === preview + drag area ===
+        self.preview_container = QWidget()
+        self.preview_container.setStyleSheet("""
+            QFrame {
+                border: 2px dashed #888;
+                border-radius: 10px;
+                background-color: transparent;
+            }
+        """)
+
+        preview_layout = QStackedLayout(self.preview_container)
         self.drop_label = QLabel("Перетащите сюда изображение\nили нажмите кнопку ниже")
         self.drop_label.setAlignment(Qt.AlignCenter)
+        self.drop_label.setStyleSheet("color: gray;")
 
         self.preview = QLabel()
         self.preview.setAlignment(Qt.AlignCenter)
-        self.preview.setMinimumHeight(240)
-        self.preview.setStyleSheet("border: 2px dashed #888; border-radius: 10px; background-color: #f0f0f0;")
         self.preview.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
-        self.meta_label = QLabel("Информация о файле:\n")
+
+        preview_layout.addWidget(self.drop_label)
+        preview_layout.addWidget(self.preview)
+        preview_layout.setCurrentWidget(self.drop_label)
+
+        # === Метаданные о картинке ===
+        self.meta_label = QLabel("Здесь будет информация о файле:\n")
         self.meta_label.setAlignment(Qt.AlignTop)
         self.meta_label.setWordWrap(True)
-        self.meta_label.setStyleSheet("color: #333;")
 
-
-        self.button = QPushButton("Выбрать файл")
-        self.button.clicked.connect(self.open_file_dialog)
-        self.button.setStyleSheet("")
-
-        layout = QVBoxLayout()
-        layout.setAlignment(Qt.AlignTop | Qt.AlignHCenter)
-        layout.addWidget(self.drop_label)
-        layout.addWidget(self.preview)
-        layout.addWidget(self.meta_label)
-        layout.addWidget(self.button)
-        layout.addStretch(1)
-
-        self.setLayout(layout)
-
-        self.setStyleSheet("""
-            ImageDropWidget {
-                border: 2px dashed #666;
-                border-radius: 10px;
-                padding: 20px;
-                background-color: #fefefe;
+        self.meta_container = QFrame()
+        self.meta_container.setObjectName("meta_container")
+        self.meta_container.setFrameShape(QFrame.StyledPanel)
+        self.meta_container.setStyleSheet("""
+            #meta_container {
+                border: 1px solid #ccc;
+                border-radius: 6px;
+                padding: 2px;
             }
         """)
+
+        meta_layout = QVBoxLayout()
+        # meta_layout.setContentsMargins(4, 4, 4, 4)
+        meta_layout.addWidget(self.meta_label)
+        self.meta_container.setLayout(meta_layout)
+
+        # === кнопка открыть файл ===
+        self.button = QPushButton("Выбрать файл")
+        self.button.clicked.connect(self.open_file_dialog)
+
+        # === final layout ===
+        layout = QVBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        # layout.setSpacing(8)
+        layout.addWidget(self.button)
+        layout.addWidget(self.preview_container, 1)  # тянется
+        layout.addWidget(self.meta_container, 0)     # внизу
+
+        self.setLayout(layout)
 
     def open_file_dialog(self):
         path, _ = QFileDialog.getOpenFileName(
@@ -77,15 +97,16 @@ class ImageDropWidget(QWidget):
         pixmap = QPixmap(path)
         if not pixmap.isNull():
             scaled = pixmap.scaled(
-                self.preview.width(), self.preview.height(),
+                self.preview_container.width(), self.preview_container.height(),
                 Qt.KeepAspectRatio, Qt.SmoothTransformation
             )
             self.preview.setPixmap(scaled)
+            self.preview_container.layout().setCurrentWidget(self.preview)
+
             info = self.get_image_info(path)
             self.meta_label.setText(info)
             self.image_path = path
-            filename = os.path.basename(path)
-            self.image_loaded.emit(filename)
+            self.image_loaded.emit(path)
         else:
             self.meta_label.setText("Ошибка загрузки изображения.")
 
@@ -97,10 +118,10 @@ class ImageDropWidget(QWidget):
             fmt = reader.format().data().decode('utf-8').upper()
             name = os.path.basename(path)
             return (
-                f"<b>Путь:</b>\n{path}\n\n"
-                f"<b>Имя файла:</b> {name}\n"
-                f"<b>Размер:</b> {size_px.width()}x{size_px.height()} px\n"
-                f"<b>Формат:</b> {fmt}\n"
+                f"<b>Путь:</b>\n{path}<br>"
+                f"<b>Имя файла:</b> {name}<br>"
+                f"<b>Размер:</b> {size_px.width()}x{size_px.height()} px<br>"
+                f"<b>Формат:</b> {fmt}<br>"
                 f"<b>Объём:</b> {size_kb:.1f} KB"
             )
         except Exception as e:

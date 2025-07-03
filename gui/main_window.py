@@ -1,12 +1,15 @@
-from PySide6.QtCore import QThread
 from PySide6.QtWidgets import (
-    QMainWindow, QWidget, QPushButton, QLabel,
-    QFileDialog, QVBoxLayout, QLineEdit, QMessageBox, QListWidget, QTextEdit, QHBoxLayout
+    QMainWindow, QWidget, QLabel,
+    QFileDialog, QVBoxLayout, QMessageBox,
+    QHBoxLayout, QFrame, QSizePolicy
 )
+from PySide6.QtCore import QThread
 
 from core.image_exporter import ExportWorker
 from core.image_utils import get_resized_image_preview_info
 from core.project_utils import find_all_res_dirs
+from core.frame_utils import wrap_with_frame
+
 from gui.image_drop_widget import ImageDropWidget
 from gui.export_settings_widget import ExportSettingsWidget
 from gui.project_settings_widget import ProjectSettingsWidget
@@ -37,43 +40,53 @@ class MainWindow(QMainWindow):
         # шаг 3
         self.export_settings = ExportSettingsWidget()
 
-        # логи
-        self.log_view = QTextEdit()
-        self.log_view.setReadOnly(True)
-        self.log_view.setMinimumWidth(300)
-
     def init_layout(self):
+        # Заголовки
+        step1_title = QLabel("<b>ШАГ 1. Настройка проекта</b>")
+        step2_title = QLabel("<b>ШАГ 2. Исходное изображение</b>")
+        step3_title = QLabel("<b>ШАГ 3. Настройки экспорта изображения</b>")
 
-        # Шаг 1 — выбор проекта
-        step1_container = QVBoxLayout()
-        step1_container.addWidget(QLabel("<b>Шаг 1. Настройка проекта</b>"))
-        step1_container.addWidget(self.project_settings)
+        # Шаг 1 (фиксированная высота)
+        step1_layout = QVBoxLayout()
+        step1_layout.addWidget(step1_title)
+        step1_layout.addWidget(self.project_settings)
 
-        # Шаг 2 — Drag & Drop
+        step1_widget = QWidget()
+        step1_widget.setLayout(step1_layout)
+        step1_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+
+        # Шаг 2
         step2_layout = QVBoxLayout()
+        step2_layout.addWidget(step2_title)
         step2_layout.addWidget(self.image_drop)
+        step2_layout.setStretch(1, 1)  # image_drop тянется
 
-        step2_container = QVBoxLayout()
-        step2_container.addWidget(QLabel("<b>Шаг 2. Исходное изображение</b>"))
-        step2_container.addLayout(step2_layout)
+        # Шаг 3
+        step3_layout = QVBoxLayout()
+        step3_layout.addWidget(step3_title)
+        step3_layout.addWidget(self.export_settings)
+        step3_layout.setStretch(1, 0)  # фикс высота
 
-        # Шаг 3 — Пока заглушка
-        step3_container = QVBoxLayout()
-        step3_container.addWidget(QLabel("<b>Шаг 3. Настройки экспорта изображения</b>"))
-        step3_container.addWidget(self.export_settings)
+        step1_frame = wrap_with_frame(self.project_settings, "step1_frame", "ШАГ 1. Настройка проекта")
+        step2_frame = wrap_with_frame(self.image_drop, "step2_frame", "ШАГ 2. Исходное изображение")
+        step3_frame = wrap_with_frame(self.export_settings, "step3_frame", "ШАГ 3. Настройки экспорта изображения")
 
-        # Сигналы
-        self.image_drop.image_loaded.connect(self.export_settings.set_suggested_name)
-        self.export_settings.convert_button.clicked.connect(self.on_convert_clicked)
+        # Объединённый шаг 2 и 3
+        step_2_3_layout = QHBoxLayout()
+        step_2_3_layout.setContentsMargins(0, 0, 0, 0)
+        step_2_3_layout.addWidget(step2_frame, 2)
+        step_2_3_layout.addWidget(step3_frame, 1)
 
-        # Финальная сборка
-        main_layout = QHBoxLayout()
-        main_layout.addLayout(step1_container)
-        main_layout.addSpacing(20)
-        main_layout.addLayout(step2_container)
-        main_layout.addSpacing(20)
-        main_layout.addLayout(step3_container)
-        main_layout.addWidget(self.log_view)
+        step_2_3_widget = QWidget()
+        step_2_3_widget.setLayout(step_2_3_layout)
+        step_2_3_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
+        # Главный layout
+        main_layout = QVBoxLayout()
+        main_layout.setContentsMargins(10, 10, 10, 10)
+        # main_layout.setSpacing(6)
+        main_layout.addWidget(step1_frame, 0)
+        main_layout.addWidget(step_2_3_widget, 1)
 
         container = QWidget()
         container.setLayout(main_layout)
@@ -94,7 +107,6 @@ class MainWindow(QMainWindow):
         self.save_path()
 
         self.update_res_list(res_dirs)
-        self.update_log_view()
 
     def load_last_path(self):
         if os.path.exists(CONFIG_PATH):
@@ -123,13 +135,6 @@ class MainWindow(QMainWindow):
         if res_dirs:
             self.res_list.setCurrentRow(0)  # авто-выбор первого элемента
             self.selected_res_path.setText(res_dirs[0])  # обновляем поле
-
-    def update_log_view(self):
-        try:
-            with open("logs.txt", "r") as f:
-                self.log_view.setPlainText(f.read())
-        except Exception as e:
-            self.log_view.setPlainText(f"Ошибка чтения логов: {e}")
 
     def on_res_selected(self, item):
         # Пока просто логика-заглушка, на будущее
@@ -222,4 +227,3 @@ class MainWindow(QMainWindow):
         self.export_settings.progress_bar.setVisible(False)
         self.export_settings.status_label.setVisible(False)
         QMessageBox.critical(self, "Ошибка", f"Ошибка при сохранении:\n{message}")
-

@@ -3,8 +3,8 @@ import json
 import logging
 
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QLabel, QLineEdit,
-    QPushButton, QListWidget, QFileDialog, QMessageBox, QListWidgetItem
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
+    QPushButton, QListWidget, QFileDialog, QMessageBox, QListWidgetItem, QSizePolicy
 )
 
 from core.project_utils import find_all_res_dirs
@@ -25,23 +25,44 @@ class ProjectSettingsWidget(QWidget):
         self.choose_button.clicked.connect(self.select_project)
 
         self.res_list = QListWidget()
+        # self.res_list.setMaximumHeight(50)
         self.res_list.currentItemChanged.connect(self.on_res_selected)
 
         self.selected_res_label = QLabel("Выбран текущий путь для сохранения:")
         self.selected_res_path = QLineEdit()
         self.selected_res_path.setReadOnly(True)
 
-        layout = QVBoxLayout()
-        layout.addWidget(QLabel("<b>Шаг 1. Настройка проекта</b>"))
-        layout.addWidget(QLabel("Путь к проекту:"))
-        layout.addWidget(self.path_label)
-        layout.addWidget(self.choose_button)
-        layout.addWidget(QLabel("Найденные res директории:"))
-        layout.addWidget(self.res_list)
-        layout.addWidget(self.selected_res_label)
-        layout.addWidget(self.selected_res_path)
-        self.setLayout(layout)
+        # Верхняя строка: [ путь | кнопка ]
+        path_row = QHBoxLayout()
+        path_row.addWidget(self.path_label)
+        path_row.addWidget(self.choose_button)
 
+        # Левая колонка
+        left_col = QVBoxLayout()
+        left_col.addWidget(QLabel("Путь к Android-проекту:"))
+        left_col.addLayout(path_row)
+        left_col.addWidget(self.selected_res_label)
+        left_col.addWidget(self.selected_res_path)
+
+        # Правая колонка
+        right_col = QVBoxLayout()
+        right_col.addWidget(QLabel("Найденные res директории:"))
+        right_col.addWidget(self.res_list, 0)
+
+        left_col.setSpacing(4)
+        left_col.setContentsMargins(0, 0, 0, 0)
+
+        right_col.setSpacing(4)
+        right_col.setContentsMargins(0, 0, 0, 0)
+
+        # Итоговая компоновка
+        layout = QHBoxLayout()
+        layout.addLayout(left_col, 1)
+        layout.addLayout(right_col, 1)
+        # layout.setSpacing(8)
+        layout.setContentsMargins(0, 0, 0, 0)
+        self.setMaximumHeight(100)
+        self.setLayout(layout)
         self.load_last_path()
 
     def select_project(self):
