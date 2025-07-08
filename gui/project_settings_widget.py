@@ -2,6 +2,7 @@ import os
 import json
 import logging
 
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
     QPushButton, QListWidget, QFileDialog, QMessageBox, QListWidgetItem, QSizePolicy
@@ -63,7 +64,6 @@ class ProjectSettingsWidget(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         self.setMaximumHeight(100)
         self.setLayout(layout)
-        self.load_last_path()
 
     def select_project(self):
         path = QFileDialog.getExistingDirectory(self, "Выберите папку проекта")
@@ -77,7 +77,6 @@ class ProjectSettingsWidget(QWidget):
 
         self.project_path = path
         self.path_label.setText(path)
-        self.save_path()
         self.update_res_list(res_dirs)
 
     def update_res_list(self, res_dirs):
@@ -99,21 +98,38 @@ class ProjectSettingsWidget(QWidget):
         current = self.res_list.currentItem()
         return current.text() if current else ""
 
-    def load_last_path(self):
-        if os.path.exists(CONFIG_PATH):
-            try:
-                with open(CONFIG_PATH, "r") as f:
-                    data = json.load(f)
-                    path = data.get("last_path", "")
-                    if os.path.isdir(os.path.join(path, "res")):
-                        self.project_path = path
-                        self.path_label.setText(path)
-            except Exception as e:
-                logging.error(f"Ошибка загрузки config: {e}")
+    def get_project_path(self):
+        return self.project_path
 
-    def save_path(self):
-        try:
-            with open(CONFIG_PATH, "w") as f:
-                json.dump({"last_path": self.project_path}, f)
-        except Exception as e:
-            logging.error(f"Ошибка сохранения config: {e}")
+    from PySide6.QtWidgets import QMessageBox
+    from core.project_utils import find_all_res_dirs
+
+    def set_project_path(self, path: str):
+        self.project_path = path
+        self.path_label.setText(path)
+
+        res_dirs = find_all_res_dirs(path)
+        self.res_list.clear()
+
+        if not res_dirs:
+            self.selected_res_path.setText("")
+            QMessageBox.warning(self, "res/ директории не найдены",
+                                "В выбранном проекте не обнаружено ни одной директории res/")
+            return
+
+        for d in res_dirs:
+            self.res_list.addItem(d)
+
+        # Если было выбрано что-то ранее, пробуем восстановить его
+        selected = self.selected_res_path.text()
+        if selected and selected in res_dirs:
+            self.set_selected_res_path(selected)
+        else:
+            # По умолчанию выбираем первый
+            self.set_selected_res_path(res_dirs[0])
+
+    def set_selected_res_path(self, path: str):
+        self.selected_res_path.setText(path)
+        items = self.res_list.findItems(path, Qt.MatchExactly)
+        if items:
+            self.res_list.setCurrentItem(items[0])

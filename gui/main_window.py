@@ -9,6 +9,7 @@ from core.image_exporter import ExportWorker
 from core.image_utils import get_resized_image_preview_info
 from core.project_utils import find_all_res_dirs
 from core.frame_utils import wrap_with_frame
+from core.config_manager import load_config, save_config
 
 from gui.image_drop_widget import ImageDropWidget
 from gui.export_settings_widget import ExportSettingsWidget
@@ -26,9 +27,13 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("Android Image Processor")
         self.setMinimumSize(1000, 500)
+
+        # загрузка прошлого конфига
+        self.config = load_config()
+        # инициализация виджетов и лайаутов
         self.init_widgets()
         self.init_layout()
-        self.load_last_path()
+        self.apply_config()
 
     def init_widgets(self):
         # шаг 1
@@ -39,6 +44,10 @@ class MainWindow(QMainWindow):
 
         # шаг 3
         self.export_settings = ExportSettingsWidget()
+
+        # подключение сигналов и слотов
+        self.export_settings.convert_button.clicked.connect(self.on_convert_clicked)
+        self.image_drop.image_loaded.connect(self.export_settings.set_suggested_name)
 
     def init_layout(self):
         # Заголовки
@@ -84,7 +93,7 @@ class MainWindow(QMainWindow):
         # Главный layout
         main_layout = QVBoxLayout()
         main_layout.setContentsMargins(10, 10, 10, 10)
-        # main_layout.setSpacing(6)
+
         main_layout.addWidget(step1_frame, 0)
         main_layout.addWidget(step_2_3_widget, 1)
 
@@ -104,28 +113,8 @@ class MainWindow(QMainWindow):
 
         self.project_path = path
         self.path_label.setText(path)
-        self.save_path()
 
         self.update_res_list(res_dirs)
-
-    def load_last_path(self):
-        if os.path.exists(CONFIG_PATH):
-            try:
-                with open(CONFIG_PATH, "r") as f:
-                    data = json.load(f)
-                    path = data.get("last_path", "")
-                    if os.path.isdir(os.path.join(path, "res")):
-                        self.project_path = path
-                        self.path_label.setText(path)
-            except Exception as e:
-                logging.error(f"Ошибка загрузки config: {e}")
-
-    def save_path(self):
-        try:
-            with open(CONFIG_PATH, "w") as f:
-                json.dump({"last_path": self.project_path}, f)
-        except Exception as e:
-            logging.error(f"Ошибка сохранения config: {e}")
 
     def update_res_list(self, res_dirs):
         self.res_list.clear()
@@ -220,6 +209,15 @@ class MainWindow(QMainWindow):
         self.export_settings.convert_button.setEnabled(True)
         self.export_settings.progress_bar.setVisible(False)
         self.export_settings.status_label.setVisible(False)
+
+        # Сохраняем конфиг
+        self.config["project_path"] = self.project_settings.get_project_path()
+        self.config["res_path"] = self.project_settings.get_selected_res_path()
+        self.config["dpi_presets"] = self.export_settings.get_dpi_presets()
+        self.config["dpi_enabled"] = self.export_settings.get_dpi_enabled()
+        self.config["webp"] = self.export_settings.is_webp_enabled()
+        save_config(self.config)
+
         QMessageBox.information(self, "Успех", "Все изображения успешно сохранены.")
 
     def on_conversion_error(self, message):
@@ -227,3 +225,22 @@ class MainWindow(QMainWindow):
         self.export_settings.progress_bar.setVisible(False)
         self.export_settings.status_label.setVisible(False)
         QMessageBox.critical(self, "Ошибка", f"Ошибка при сохранении:\n{message}")
+
+    def apply_config(self):
+        # 1. Android проект
+        project_path = self.config.get("project_path", "")
+        if os.path.exists(project_path):
+            self.project_settings.set_project_path(project_path)
+
+        # 2. Путь до res
+        res_path = self.config.get("res_path", "")
+        if os.path.exists(res_path):
+            self.project_settings.set_selected_res_path(res_path)
+
+        # 3. Пресеты
+        dpi_values = self.config.get("dpi_presets", {})
+        dpi_enabled = self.config.get("dpi_enabled", {})
+        self.export_settings.set_presets(dpi_values, dpi_enabled)
+
+        # 4. WebP
+        self.export_settings.set_webp_enabled(self.config.get("webp", False))

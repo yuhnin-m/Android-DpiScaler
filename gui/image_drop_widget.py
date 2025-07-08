@@ -27,7 +27,7 @@ class ImageDropWidget(QWidget):
         """)
 
         preview_layout = QStackedLayout(self.preview_container)
-        self.drop_label = QLabel("Перетащите сюда изображение\nили нажмите кнопку ниже")
+        self.drop_label = QLabel("Перетащите сюда изображение\nили нажмите кнопку выше")
         self.drop_label.setAlignment(Qt.AlignCenter)
         self.drop_label.setStyleSheet("color: gray;")
 

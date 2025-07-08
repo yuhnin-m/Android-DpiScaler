@@ -81,7 +81,9 @@ class ExportSettingsWidget(QWidget):
 
         self.setLayout(layout)
 
-    def set_suggested_name(self, filename: str):
+    def set_suggested_name(self, filepath: str):
+        print(f"set_suggested_name: {filepath}")
+        filename = os.path.basename(filepath)
         name, _ = os.path.splitext(filename)
         name = re.sub(r'[^a-zA-Z0-9_]', '_', name)
         self.export_name_input.setText(name)
@@ -135,3 +137,28 @@ class ExportSettingsWidget(QWidget):
             input_field.setText(default_scales.get(dpi, "1.0"))
             input_field.setStyleSheet("")  # убираем красную рамку, если была
 
+    def set_presets(self, dpi_values: dict, dpi_enabled: dict):
+        for dpi, (checkbox, input_field) in self.dpi_widgets.items():
+            if dpi in dpi_values:
+                input_field.setText(str(dpi_values[dpi]))
+            if dpi in dpi_enabled:
+                checkbox.setChecked(dpi_enabled[dpi])
+
+
+    def get_dpi_presets(self) -> dict:
+        return {
+            dpi: float(input_field.text())
+            for dpi, (_, input_field) in self.dpi_widgets.items()
+        }
+
+    def get_dpi_enabled(self) -> dict:
+        return {
+            dpi: checkbox.isChecked()
+            for dpi, (checkbox, _) in self.dpi_widgets.items()
+        }
+
+    def set_webp_enabled(self, value: bool):
+        self.webp_checkbox.setChecked(value)
+
+    def is_webp_enabled(self) -> bool:
+        return self.webp_checkbox.isChecked()
