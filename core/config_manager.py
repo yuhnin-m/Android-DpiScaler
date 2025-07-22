@@ -1,7 +1,19 @@
 import json
 import os
+import sys
 
-CONFIG_FILE = "config.json"
+# Определяем, куда класть конфиг
+def get_config_dir():
+    if sys.platform == "darwin":
+        return os.path.expanduser("~/Library/Application Support/PNG2Drawable")
+    elif sys.platform == "win32":
+        return os.path.join(os.getenv("APPDATA"), "PNG2Drawable")
+    else:
+        return os.path.expanduser("~/.png2drawable")
+
+
+CONFIG_DIR = get_config_dir()
+CONFIG_FILE = os.path.join(CONFIG_DIR, "config.json")
 
 DEFAULT_CONFIG = {
     "project_path": "",
@@ -31,10 +43,10 @@ def load_config():
     try:
         with open(CONFIG_FILE, "r", encoding="utf-8") as f:
             data = json.load(f)
-    except Exception:
+    except Exception as e:
+        print(f"[Config] Ошибка при загрузке конфига: {e}")
         return DEFAULT_CONFIG.copy()
 
-    # Мержим с дефолтом, чтобы при обновлении всё работало
     config = DEFAULT_CONFIG.copy()
     config.update(data)
     config["dpi_presets"].update(data.get("dpi_presets", {}))
@@ -44,7 +56,8 @@ def load_config():
 
 def save_config(config: dict):
     try:
+        os.makedirs(CONFIG_DIR, exist_ok=True)
         with open(CONFIG_FILE, "w", encoding="utf-8") as f:
             json.dump(config, f, indent=4, ensure_ascii=False)
     except Exception as e:
-        print(f"Ошибка при сохранении config.json: {e}")
+        print(f"[Config] Ошибка при сохранении config.json: {e}")

@@ -25,7 +25,7 @@ CONFIG_PATH = "config.json"
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Android Image Processor")
+        self.setWindowTitle("PNG2Drawable – Android DPI Exporter")
         self.setMinimumSize(1000, 500)
 
         # загрузка прошлого конфига
