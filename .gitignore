@@ -1,0 +1,56 @@
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Python packaging / build artifacts
+build/
+dist/
+*.egg-info/
+.eggs/
+PNG2Drawable_dmg/
+
+# Installer artifacts
+*.dmg
+*.pkg
+*.msi
+*.exe
+*.AppImage
+
+# Application runtime data
+logs.txt
+config.json
+*.log
+
+# IDE
+.idea/
+.vscode/
+
+# Qt / tooling temp files
+*.qmlc
+*.jsc
+*.tmp
+
+# Local env files
+.env
+.env.*
+
+# Optional release outputs
+artifacts/
+release/
