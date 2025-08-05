@@ -1,25 +1,25 @@
-from PySide6.QtWidgets import (
-    QMainWindow, QWidget, QLabel,
-    QFileDialog, QVBoxLayout, QMessageBox,
-    QHBoxLayout, QFrame, QSizePolicy
-)
-from PySide6.QtCore import QThread
+import os
 
+from PIL import Image
+from PySide6.QtCore import QThread
+from PySide6.QtGui import QCloseEvent
+from PySide6.QtWidgets import (
+    QHBoxLayout,
+    QLabel,
+    QMainWindow,
+    QMessageBox,
+    QSizePolicy,
+    QVBoxLayout,
+    QWidget,
+)
+
+from core.config_manager import load_config, save_config
+from core.frame_utils import wrap_with_frame
 from core.image_exporter import ExportWorker
 from core.image_utils import get_resized_image_preview_info
-from core.project_utils import find_all_res_dirs
-from core.frame_utils import wrap_with_frame
-from core.config_manager import load_config, save_config
-
-from gui.image_drop_widget import ImageDropWidget
 from gui.export_settings_widget import ExportSettingsWidget
+from gui.image_drop_widget import ImageDropWidget
 from gui.project_settings_widget import ProjectSettingsWidget
-
-import json
-import os
-import logging
-
-CONFIG_PATH = "config.json"
 
 
 class MainWindow(QMainWindow):
@@ -27,6 +27,8 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("PNG2Drawable – Android DPI Exporter")
         self.setMinimumSize(1000, 500)
+        self.thread = None
+        self.worker = None
 
         # загрузка прошлого конфига
         self.config = load_config()
@@ -101,38 +103,11 @@ class MainWindow(QMainWindow):
         container.setLayout(main_layout)
         self.setCentralWidget(container)
 
-    def select_project(self):
-        path = QFileDialog.getExistingDirectory(self, "Выберите папку проекта")
-        if not path:
-            return
-
-        res_dirs = find_all_res_dirs(path)
-        if not res_dirs:
-            QMessageBox.warning(self, "Ошибка", "Не найдены директории res/ в подпапках проекта.")
-            return
-
-        self.project_path = path
-        self.path_label.setText(path)
-
-        self.update_res_list(res_dirs)
-
-    def update_res_list(self, res_dirs):
-        self.res_list.clear()
-        for path in res_dirs:
-            self.res_list.addItem(path)
-
-        if res_dirs:
-            self.res_list.setCurrentRow(0)  # авто-выбор первого элемента
-            self.selected_res_path.setText(res_dirs[0])  # обновляем поле
-
     def on_res_selected(self, item):
         # Пока просто логика-заглушка, на будущее
         pass
 
     def on_convert_clicked(self):
-        from PIL import Image
-        from PySide6.QtWidgets import QMessageBox
-
         if not self.image_drop.image_path:
             QMessageBox.warning(self, "Ошибка", "Сначала выберите изображение.")
             return
@@ -144,16 +119,20 @@ class MainWindow(QMainWindow):
 
         config = self.export_settings.get_export_config()
         if config is None:
-            QMessageBox.warning(self, "Ошибка", "Проверьте значения масштабов DPI.")
+            QMessageBox.warning(
+                self,
+                "Ошибка",
+                "Проверьте имя файла, значения масштабов DPI и выберите хотя бы один DPI.",
+            )
             return
 
         try:
-            image = Image.open(self.image_drop.image_path)
+            with Image.open(self.image_drop.image_path) as src:
+                image = src.copy()
         except Exception as e:
             QMessageBox.critical(self, "Ошибка", f"Не удалось загрузить изображение: {e}")
             return
 
-        original_width, original_height = image.size
         base_filename = config["filename"]
         to_webp = config["to_webp"]
         dpi_scales = config["dpi"]
@@ -163,14 +142,17 @@ class MainWindow(QMainWindow):
         output_paths = []
         format_str = "WEBP" if to_webp else "PNG"
 
-        for dpi, scale in dpi_scales.items():
-            folder = os.path.join(base_res_path, f"drawable-{dpi}")
-            os.makedirs(folder, exist_ok=True)
-            file_path = os.path.join(folder, f"{base_filename}.{ext}")
+        try:
+            for dpi, scale in dpi_scales.items():
+                folder = os.path.join(base_res_path, f"drawable-{dpi}")
+                file_path = os.path.join(folder, f"{base_filename}.{ext}")
 
-            path, (w, h), size_kb = get_resized_image_preview_info(image, scale, format_str, file_path)
-            preview_lines.append(f"{path} — {w}x{h} — ~{size_kb:.1f} KB")
-            output_paths.append((dpi, path, (w, h)))
+                path, (w, h), size_kb = get_resized_image_preview_info(image, scale, format_str, file_path)
+                preview_lines.append(f"{path} — {w}x{h} — ~{size_kb:.1f} KB")
+                output_paths.append((dpi, path, (w, h)))
+        except Exception as error:
+            QMessageBox.critical(self, "Ошибка", f"Не удалось подготовить превью экспорта:\n{error}")
+            return
 
         msg = QMessageBox(self)
         msg.setWindowTitle("Подтвердите сохранение")
@@ -181,13 +163,12 @@ class MainWindow(QMainWindow):
         if result != QMessageBox.Ok:
             return
 
+        if self.thread and self.thread.isRunning():
+            QMessageBox.warning(self, "Подождите", "Экспорт уже выполняется.")
+            return
+
         # Шаг 2 — блокируем кнопку и показываем прогресс
-        self.export_settings.convert_button.setEnabled(False)
-        self.export_settings.progress_bar.setVisible(True)
-        self.export_settings.status_label.setVisible(True)
-        self.export_settings.progress_bar.setMaximum(len(output_paths))
-        self.export_settings.progress_bar.setValue(0)
-        self.export_settings.status_label.setText("Конвертация...")
+        self._set_export_running_ui(len(output_paths))
 
         # Стартуем воркер в отдельном потоке
         self.thread = QThread()
@@ -200,15 +181,15 @@ class MainWindow(QMainWindow):
 
         self.thread.started.connect(self.worker.run)
         self.worker.finished.connect(self.thread.quit)
-        self.worker.finished.connect(self.worker.deleteLater)
+        self.worker.error.connect(self.thread.quit)
+        self.thread.finished.connect(self.worker.deleteLater)
         self.thread.finished.connect(self.thread.deleteLater)
+        self.thread.finished.connect(self._clear_worker_refs)
 
         self.thread.start()
 
     def on_conversion_finished(self):
-        self.export_settings.convert_button.setEnabled(True)
-        self.export_settings.progress_bar.setVisible(False)
-        self.export_settings.status_label.setVisible(False)
+        self._reset_export_ui()
 
         # Сохраняем конфиг
         self.config["project_path"] = self.project_settings.get_project_path()
@@ -221,10 +202,25 @@ class MainWindow(QMainWindow):
         QMessageBox.information(self, "Успех", "Все изображения успешно сохранены.")
 
     def on_conversion_error(self, message):
+        self._reset_export_ui()
+        QMessageBox.critical(self, "Ошибка", f"Ошибка при сохранении:\n{message}")
+
+    def _set_export_running_ui(self, total_steps: int):
+        self.export_settings.convert_button.setEnabled(False)
+        self.export_settings.progress_bar.setVisible(True)
+        self.export_settings.status_label.setVisible(True)
+        self.export_settings.progress_bar.setMaximum(total_steps)
+        self.export_settings.progress_bar.setValue(0)
+        self.export_settings.status_label.setText("Конвертация...")
+
+    def _reset_export_ui(self):
         self.export_settings.convert_button.setEnabled(True)
         self.export_settings.progress_bar.setVisible(False)
         self.export_settings.status_label.setVisible(False)
-        QMessageBox.critical(self, "Ошибка", f"Ошибка при сохранении:\n{message}")
+
+    def _clear_worker_refs(self):
+        self.thread = None
+        self.worker = None
 
     def apply_config(self):
         # 1. Android проект
@@ -244,3 +240,9 @@ class MainWindow(QMainWindow):
 
         # 4. WebP
         self.export_settings.set_webp_enabled(self.config.get("webp", False))
+
+    def closeEvent(self, event: QCloseEvent):  # noqa: N802
+        if self.thread and self.thread.isRunning():
+            self.thread.quit()
+            self.thread.wait(2000)
+        super().closeEvent(event)

@@ -1,16 +1,28 @@
-from PIL import Image
 from io import BytesIO
 
-def get_resized_image_preview_info(image: Image.Image, scale: float, format: str, path: str) -> tuple[str, tuple[int, int], float]:
+from PIL import Image
+
+
+def get_scaled_dimensions(size: tuple[int, int], scale: float) -> tuple[int, int]:
+    width, height = size
+    new_width = max(1, int(width * scale))
+    new_height = max(1, int(height * scale))
+    return new_width, new_height
+
+
+def get_resized_image_preview_info(
+    image: Image.Image,
+    scale: float,
+    format: str,
+    path: str,
+) -> tuple[str, tuple[int, int], float]:
     """
     Возвращает информацию о ресайзнутом изображении:
     - путь
     - размер (width, height)
     - примерный вес в килобайтах
     """
-    width, height = image.size
-    new_w = int(width * scale)
-    new_h = int(height * scale)
+    new_w, new_h = get_scaled_dimensions(image.size, scale)
 
     resized = image.resize((new_w, new_h), Image.LANCZOS)
     buffer = BytesIO()

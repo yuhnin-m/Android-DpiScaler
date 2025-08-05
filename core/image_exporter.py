@@ -1,6 +1,12 @@
-from PySide6.QtCore import QObject, Signal
-from PIL import Image
 import os
+import tempfile
+
+from PIL import Image
+from PySide6.QtCore import QObject, Signal
+
+from core.image_utils import get_scaled_dimensions
+from core.resource_name import validate_resource_name
+
 
 class ExportWorker(QObject):
     progress = Signal(int)
@@ -15,25 +21,37 @@ class ExportWorker(QObject):
 
     def run(self):
         try:
-            image = Image.open(self.image_path)
-            width, height = image.size
+            with Image.open(self.image_path) as src:
+                image = src.copy()
+
             ext = "webp" if self.config["to_webp"] else "png"
+            save_format = "WEBP" if self.config["to_webp"] else "PNG"
             dpi_data = self.config["dpi"]
             filename = self.config["filename"]
+            validate_resource_name(filename)
 
             for i, (dpi, scale) in enumerate(dpi_data.items()):
-                out_w = int(width * scale)
-                out_h = int(height * scale)
+                out_w, out_h = get_scaled_dimensions(image.size, scale)
                 resized = image.resize((out_w, out_h), Image.LANCZOS)
 
                 folder = os.path.join(self.base_res_path, f"drawable-{dpi}")
                 os.makedirs(folder, exist_ok=True)
                 out_path = os.path.join(folder, f"{filename}.{ext}")
+                tmp_path = None
+                try:
+                    with tempfile.NamedTemporaryFile(
+                        prefix=f".{filename}_",
+                        suffix=f".{ext}",
+                        dir=folder,
+                        delete=False,
+                    ) as tmp:
+                        tmp_path = tmp.name
+                    resized.save(tmp_path, format=save_format)
+                    os.replace(tmp_path, out_path)
+                finally:
+                    if tmp_path and os.path.exists(tmp_path):
+                        os.remove(tmp_path)
 
-                if os.path.exists(out_path):
-                    os.remove(out_path)
-
-                resized.save(out_path, format="WEBP" if self.config["to_webp"] else "PNG")
                 self.progress.emit(i + 1)
 
             self.finished.emit()

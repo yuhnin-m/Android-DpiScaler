@@ -1,10 +1,19 @@
 import os
-import re
+
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QLabel, QLineEdit,
-    QGroupBox, QGridLayout, QCheckBox, QHBoxLayout, QPushButton, QProgressBar
+    QCheckBox,
+    QGridLayout,
+    QGroupBox,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QProgressBar,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
 )
 
+from core.resource_name import sanitize_resource_name, validate_resource_name
 from core.validated_line_edit import ValidatedLineEdit
 
 
@@ -15,7 +24,8 @@ class ExportSettingsWidget(QWidget):
         # Имя файла
         self.export_name_label = QLabel("Имя файла:")
         self.export_name_input = QLineEdit()
-        self.export_name_input.setPlaceholderText("по умолчанию — из имени файла")
+        self.export_name_input.setPlaceholderText("пример: ic_launcher_foreground")
+        self.export_name_input.setToolTip("Только [a-z0-9_], должно начинаться с буквы.")
 
         # Пресеты DPI
         self.dpi_widgets = {}
@@ -65,7 +75,7 @@ class ExportSettingsWidget(QWidget):
         dpi_group.setLayout(dpi_layout)
 
         # Конвертация в WebP
-        self.webp_checkbox = QCheckBox(f"Конвертировать в WebP")
+        self.webp_checkbox = QCheckBox("Конвертировать в WebP")
 
         # Финальный layout
         layout = QVBoxLayout()
@@ -82,15 +92,27 @@ class ExportSettingsWidget(QWidget):
         self.setLayout(layout)
 
     def set_suggested_name(self, filepath: str):
-        print(f"set_suggested_name: {filepath}")
         filename = os.path.basename(filepath)
-        name, _ = os.path.splitext(filename)
-        name = re.sub(r'[^a-zA-Z0-9_]', '_', name)
-        self.export_name_input.setText(name)
+        suggested = sanitize_resource_name(filename)
+        self.export_name_input.setText(suggested)
 
     def get_export_config(self):
         dpi_config = {}
         has_errors = False
+        self.export_name_input.setStyleSheet("")
+        self.export_name_input.setToolTip("Только [a-z0-9_], должно начинаться с буквы.")
+
+        raw_name = self.export_name_input.text().strip()
+        sanitized_name = sanitize_resource_name(raw_name)
+        if sanitized_name != raw_name:
+            self.export_name_input.setText(sanitized_name)
+
+        try:
+            validate_resource_name(sanitized_name)
+        except ValueError as error:
+            self.export_name_input.setStyleSheet("border: 1px solid red;")
+            self.export_name_input.setToolTip(str(error))
+            has_errors = True
 
         for dpi, (checkbox, input_field) in self.dpi_widgets.items():
             if checkbox.isChecked():
@@ -107,21 +129,17 @@ class ExportSettingsWidget(QWidget):
                     input_field.setStyleSheet("border: 1px solid red;")
                     has_errors = True
 
+        if not dpi_config:
+            has_errors = True
+
         if has_errors:
-            return None  # или кинуть исключение, или вернуть статус
+            return None
         else:
             return {
-                "filename": self.export_name_input.text().strip(),
+                "filename": sanitized_name,
                 "dpi": dpi_config,
                 "to_webp": self.webp_checkbox.isChecked()
             }
-
-    def set_suggested_name(self, filename: str):
-        # Убираем расширение
-        name, _ = os.path.splitext(filename)
-        # Заменяем всё, что Android не любит
-        name = re.sub(r'[^a-zA-Z0-9_]', '_', name)
-        self.export_name_input.setText(name)
 
     def reset_defaults(self):
         default_scales = {
