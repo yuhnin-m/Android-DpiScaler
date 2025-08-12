@@ -1,6 +1,5 @@
 import os
 
-from PIL import Image
 from PySide6.QtCore import QThread
 from PySide6.QtGui import QCloseEvent
 from PySide6.QtWidgets import (
@@ -16,10 +15,11 @@ from PySide6.QtWidgets import (
 from core.config_manager import load_config, save_config
 from core.frame_utils import wrap_with_frame
 from core.image_exporter import ExportWorker
-from core.image_utils import get_resized_image_preview_info
+from domain.export_models import ExportRequest
 from gui.export_settings_widget import ExportSettingsWidget
 from gui.image_drop_widget import ImageDropWidget
 from gui.project_settings_widget import ProjectSettingsWidget
+from services.export_planner import build_preview_entries
 
 
 class MainWindow(QMainWindow):
@@ -103,7 +103,7 @@ class MainWindow(QMainWindow):
         container.setLayout(main_layout)
         self.setCentralWidget(container)
 
-    def on_res_selected(self, item):
+    def on_res_selected(self, _item):
         # Пока просто логика-заглушка, на будущее
         pass
 
@@ -126,33 +126,24 @@ class MainWindow(QMainWindow):
             )
             return
 
-        try:
-            with Image.open(self.image_drop.image_path) as src:
-                image = src.copy()
-        except Exception as e:
-            QMessageBox.critical(self, "Ошибка", f"Не удалось загрузить изображение: {e}")
-            return
-
-        base_filename = config["filename"]
-        to_webp = config["to_webp"]
-        dpi_scales = config["dpi"]
-        ext = "webp" if to_webp else "png"
-
-        preview_lines = []
-        output_paths = []
-        format_str = "WEBP" if to_webp else "PNG"
+        request = ExportRequest(
+            image_path=self.image_drop.image_path,
+            base_res_path=base_res_path,
+            filename=config["filename"],
+            dpi_scales=config["dpi"],
+            to_webp=config["to_webp"],
+        )
 
         try:
-            for dpi, scale in dpi_scales.items():
-                folder = os.path.join(base_res_path, f"drawable-{dpi}")
-                file_path = os.path.join(folder, f"{base_filename}.{ext}")
-
-                path, (w, h), size_kb = get_resized_image_preview_info(image, scale, format_str, file_path)
-                preview_lines.append(f"{path} — {w}x{h} — ~{size_kb:.1f} KB")
-                output_paths.append((dpi, path, (w, h)))
+            preview_entries = build_preview_entries(request)
         except Exception as error:
             QMessageBox.critical(self, "Ошибка", f"Не удалось подготовить превью экспорта:\n{error}")
             return
+
+        preview_lines = [
+            f"{entry.output_path} — {entry.width}x{entry.height} — ~{entry.size_kb:.1f} KB"
+            for entry in preview_entries
+        ]
 
         msg = QMessageBox(self)
         msg.setWindowTitle("Подтвердите сохранение")
@@ -168,11 +159,11 @@ class MainWindow(QMainWindow):
             return
 
         # Шаг 2 — блокируем кнопку и показываем прогресс
-        self._set_export_running_ui(len(output_paths))
+        self._set_export_running_ui(len(preview_entries))
 
         # Стартуем воркер в отдельном потоке
         self.thread = QThread()
-        self.worker = ExportWorker(self.image_drop.image_path, config, base_res_path)
+        self.worker = ExportWorker(request)
         self.worker.moveToThread(self.thread)
 
         self.worker.progress.connect(self.export_settings.progress_bar.setValue)
