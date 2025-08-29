@@ -29,12 +29,27 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements-dev.txt
           pip install -e .
+          python -m pip check
 
       - name: Lint (ruff)
-        run: ruff check tests
+        run: ruff check core gui domain services infrastructure tests main.py
 
       - name: Compile check
-        run: python -m compileall main.py core gui tests
+        run: python -m compileall main.py core gui domain services infrastructure tests
 
       - name: Run tests
-        run: python -m pytest
+        run: python -m pytest -q
+
+      - name: UI smoke (offscreen)
+        if: runner.os != 'Windows'
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: |
+          python - <<'PY'
+          from PySide6.QtWidgets import QApplication
+          from gui.main_window import MainWindow
+          app = QApplication([])
+          window = MainWindow()
+          window.close()
+          print("ui_smoke_ok")
+          PY

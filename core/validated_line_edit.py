@@ -2,7 +2,7 @@ from PySide6.QtWidgets import QLineEdit
 
 
 class ValidatedLineEdit(QLineEdit):
-    def focusOutEvent(self, event):
+    def focusOutEvent(self, event):  # noqa: N802
         super().focusOutEvent(event)
         text = self.text().strip()
         try:

@@ -2,6 +2,7 @@ import json
 import os
 import sys
 
+
 # Определяем, куда класть конфиг
 def get_config_dir():
     if sys.platform == "darwin":
@@ -41,7 +42,7 @@ def load_config():
         return DEFAULT_CONFIG.copy()
 
     try:
-        with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+        with open(CONFIG_FILE, encoding="utf-8") as f:
             data = json.load(f)
     except Exception as e:
         print(f"[Config] Ошибка при загрузке конфига: {e}")

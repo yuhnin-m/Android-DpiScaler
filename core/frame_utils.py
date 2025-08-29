@@ -1,18 +1,19 @@
-from PySide6.QtWidgets import (
-    QWidget, QLabel,QVBoxLayout,QFrame
-)
+from PySide6.QtWidgets import QFrame, QLabel, QVBoxLayout, QWidget
+
 
 def wrap_with_frame(widget: QWidget, object_name: str, title: str = "") -> QFrame:
     container = QFrame()
     container.setObjectName(object_name)
     container.setFrameShape(QFrame.StyledPanel)
-    container.setStyleSheet(f"""
+    container.setStyleSheet(
+        f"""
         #{object_name} {{
             border: 1px solid #aaa;
             border-radius: 8px;
             padding: 8px;
         }}
-    """)
+    """
+    )
     layout = QVBoxLayout()
     layout.setContentsMargins(0, 0, 0, 0)
     layout.setSpacing(4)

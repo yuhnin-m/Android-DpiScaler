@@ -1,12 +1,20 @@
-from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QLabel, QPushButton,
-    QFileDialog, QSizePolicy, QStackedLayout, QFrame
-)
-from PySide6.QtGui import QPixmap, QDragEnterEvent, QDropEvent, QImageReader
-from PySide6.QtCore import Qt, Signal
 import os
 
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QDragEnterEvent, QDropEvent, QImageReader, QPixmap
+from PySide6.QtWidgets import (
+    QFileDialog,
+    QFrame,
+    QLabel,
+    QPushButton,
+    QSizePolicy,
+    QStackedLayout,
+    QVBoxLayout,
+    QWidget,
+)
+
 ACCEPTED_FORMATS = (".png", ".jpg", ".jpeg", ".webp")
+
 
 class ImageDropWidget(QWidget):
     image_loaded = Signal(str)
@@ -82,11 +90,11 @@ class ImageDropWidget(QWidget):
         if path:
             self.set_image(path)
 
-    def dragEnterEvent(self, event: QDragEnterEvent):
+    def dragEnterEvent(self, event: QDragEnterEvent):  # noqa: N802
         if event.mimeData().hasUrls():
             event.acceptProposedAction()
 
-    def dropEvent(self, event: QDropEvent):
+    def dropEvent(self, event: QDropEvent):  # noqa: N802
         for url in event.mimeData().urls():
             path = url.toLocalFile()
             if path.lower().endswith(ACCEPTED_FORMATS):

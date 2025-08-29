@@ -1,17 +1,17 @@
-import os
 import logging
+import os
+
 
 def find_all_res_dirs(project_path: str):
     logging.info(f"Поиск res/ директорий в: {project_path}")
     res_dirs = []
 
     try:
-        for root, dirs, files in os.walk(project_path):
-            for d in dirs:
-                if d == "res":
-                    full_path = os.path.join(root, d)
+        for root, dirs, _files in os.walk(project_path):
+            for directory in dirs:
+                if directory == "res":
+                    full_path = os.path.join(root, directory)
 
-                    # Проверяем, не лежит ли этот res внутри build/generated
                     normalized = os.path.normpath(full_path)
                     parts = normalized.split(os.sep)
 
@@ -23,8 +23,8 @@ def find_all_res_dirs(project_path: str):
 
                     res_dirs.append(full_path)
                     logging.info(f"Найдена res/ директория: {full_path}")
-    except Exception as e:
-        logging.error(f"Ошибка при поиске res/ директорий: {e}")
+    except Exception as error:
+        logging.error(f"Ошибка при поиске res/ директорий: {error}")
 
     logging.info(f"Всего найдено: {len(res_dirs)}")
     return res_dirs

@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import pytest
 from PIL import Image
 
 from domain.export_models import ExportRequest
@@ -33,3 +34,19 @@ def test_build_export_targets_and_preview_do_not_create_output_dirs(tmp_path: Pa
 
     assert not (base_res_path / "drawable-mdpi").exists()
     assert not (base_res_path / "drawable-xhdpi").exists()
+
+
+def test_build_export_targets_rejects_invalid_filename(tmp_path: Path) -> None:
+    image_path = tmp_path / "source.png"
+    Image.new("RGBA", (10, 8), (255, 0, 0, 255)).save(image_path)
+
+    request = ExportRequest(
+        image_path=str(image_path),
+        base_res_path=str(tmp_path / "res"),
+        filename="../evil",
+        dpi_scales={"mdpi": 0.5},
+        to_webp=False,
+    )
+
+    with pytest.raises(ValueError):
+        build_export_targets(request)

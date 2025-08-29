@@ -1,7 +1,9 @@
-import sys
-import os
 import logging
+import os
+import sys
+
 from PySide6.QtWidgets import QApplication
+
 from gui.main_window import MainWindow
 
 
