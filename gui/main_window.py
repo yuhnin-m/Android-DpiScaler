@@ -14,6 +14,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from core.app_metadata import APP_NAME
 from core.config_manager import load_config, save_config
 from core.frame_utils import wrap_with_frame
 from core.function_worker import FunctionWorker
@@ -28,7 +29,7 @@ from services.export_planner import build_preview_entries
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("PNG2Drawable – Android DPI Exporter")
+        self.setWindowTitle(f"{APP_NAME} – Android DPI Exporter")
         self.setMinimumSize(1000, 500)
         self.preview_thread = None
         self.preview_worker = None

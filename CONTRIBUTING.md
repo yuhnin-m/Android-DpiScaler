@@ -10,8 +10,8 @@ pip install -e .
 
 ## Local checks
 ```bash
-ruff check .
-python -m pytest
+ruff check core gui domain services infrastructure tests packaging/scripts main.py
+python -m pytest -q
 ```
 
 ## Branches and commits

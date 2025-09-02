@@ -32,10 +32,10 @@ jobs:
           python -m pip check
 
       - name: Lint (ruff)
-        run: ruff check core gui domain services infrastructure tests main.py
+        run: ruff check core gui domain services infrastructure tests packaging/scripts main.py
 
       - name: Compile check
-        run: python -m compileall main.py core gui domain services infrastructure tests
+        run: python -m compileall main.py core gui domain services infrastructure tests packaging
 
       - name: Run tests
         run: python -m pytest -q

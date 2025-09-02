@@ -23,6 +23,20 @@ python main.py
 - Python 3.11+
 - macOS / Windows / Linux
 
+## Build standalone packages
+Install dev dependencies first:
+```bash
+pip install -r requirements-dev.txt
+pip install -e .
+```
+
+Build scripts:
+- macOS: `bash packaging/scripts/build_macos.sh`
+- Linux: `bash packaging/scripts/build_linux.sh`
+- Windows (PowerShell): `./packaging/scripts/build_windows.ps1`
+
+Artifacts are created in `artifacts/`.
+
 ## Project status
 Current status: pre-release (alpha).
 The app is functional, but active refactoring is in progress before first public release.

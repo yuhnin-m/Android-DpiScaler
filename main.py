@@ -4,16 +4,17 @@ import sys
 
 from PySide6.QtWidgets import QApplication
 
+from core.app_metadata import APP_NAME, APP_SLUG, __version__
 from gui.main_window import MainWindow
 
 
 def get_app_data_dir():
     if sys.platform == "darwin":
-        return os.path.expanduser("~/Library/Application Support/PNG2Drawable")
+        return os.path.expanduser(f"~/Library/Application Support/{APP_NAME}")
     elif sys.platform == "win32":
-        return os.path.join(os.getenv("APPDATA"), "PNG2Drawable")
+        return os.path.join(os.getenv("APPDATA"), APP_NAME)
     else:
-        return os.path.expanduser("~/.png2drawable")
+        return os.path.expanduser(f"~/.{APP_SLUG}")
 
 
 def setup_logging(log_path):
@@ -24,7 +25,7 @@ def setup_logging(log_path):
         handler = logging.FileHandler(log_path, mode='a', encoding='utf-8')
     except Exception as e:
         # fallback в /tmp если что-то пошло не так
-        fallback_log = "/tmp/png2drawable_fallback.log"
+        fallback_log = f"/tmp/{APP_SLUG}_fallback.log"
         handler = logging.FileHandler(fallback_log, mode='a', encoding='utf-8')
         handler.setFormatter(logging.Formatter('%(asctime)s - FATAL - %(message)s'))
         logger.addHandler(handler)
@@ -43,8 +44,10 @@ def main():
     log_path = os.path.join(app_data_dir, "logs.txt")
     setup_logging(log_path)
 
-    logging.info("Application started")
+    logging.info("Application started: %s %s", APP_NAME, __version__)
     app = QApplication(sys.argv)
+    app.setApplicationName(APP_NAME)
+    app.setApplicationVersion(__version__)
     window = MainWindow()
     window.show()
     sys.exit(app.exec())

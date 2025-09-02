@@ -2,15 +2,17 @@ import json
 import os
 import sys
 
+from core.app_metadata import APP_NAME, APP_SLUG
+
 
 # Определяем, куда класть конфиг
 def get_config_dir():
     if sys.platform == "darwin":
-        return os.path.expanduser("~/Library/Application Support/PNG2Drawable")
+        return os.path.expanduser(f"~/Library/Application Support/{APP_NAME}")
     elif sys.platform == "win32":
-        return os.path.join(os.getenv("APPDATA"), "PNG2Drawable")
+        return os.path.join(os.getenv("APPDATA"), APP_NAME)
     else:
-        return os.path.expanduser("~/.png2drawable")
+        return os.path.expanduser(f"~/.{APP_SLUG}")
 
 
 CONFIG_DIR = get_config_dir()
