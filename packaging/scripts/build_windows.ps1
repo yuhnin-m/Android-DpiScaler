@@ -1,7 +1,7 @@
 $ErrorActionPreference = "Stop"
 
 $root = (Resolve-Path (Join-Path $PSScriptRoot "../..")).Path
-$specPath = Join-Path $root "packaging/pyinstaller/png2drawable.spec"
+$specPath = Join-Path $root "packaging/pyinstaller/android_dpiscaler.spec"
 $artifactsDir = Join-Path $root "artifacts"
 
 Set-Location $root

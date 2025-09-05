@@ -24,7 +24,7 @@ build/
 dist/
 *.egg-info/
 .eggs/
-PNG2Drawable_dmg/
+*_dmg/
 
 # Installer artifacts
 *.dmg

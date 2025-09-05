@@ -1,6 +1,6 @@
-# PNG2Drawable
+# Android DpiScaler
 
-PNG2Drawable is a desktop tool for Android developers.
+Android DpiScaler is a desktop tool for Android developers.
 It takes a source raster image and generates drawable variants for Android density buckets (`mdpi`, `hdpi`, `xhdpi`, `xxhdpi`, `xxxhdpi`).
 
 ## What it does

@@ -11,7 +11,7 @@ def atomic_save_image(image: Image.Image, output_path: str, save_format: str) ->
     tmp_path = None
     try:
         with tempfile.NamedTemporaryFile(
-            prefix=".png2drawable_",
+            prefix=".android_dpiscaler_",
             suffix=f".{save_format.lower()}",
             dir=output_dir,
             delete=False,

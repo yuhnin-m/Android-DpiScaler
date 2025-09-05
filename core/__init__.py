@@ -1,1 +1,1 @@
-"""Core business and infrastructure utilities for PNG2Drawable."""
+"""Core business and infrastructure utilities for Android DpiScaler."""

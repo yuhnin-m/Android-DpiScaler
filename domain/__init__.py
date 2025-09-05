@@ -1,1 +1,1 @@
-"""Domain models for PNG2Drawable."""
+"""Domain models for Android DpiScaler."""

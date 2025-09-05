@@ -1,1 +1,1 @@
-"""Qt UI components for PNG2Drawable."""
+"""Qt UI components for Android DpiScaler."""

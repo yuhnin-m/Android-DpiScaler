@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-SPEC_PATH="$ROOT_DIR/packaging/pyinstaller/png2drawable.spec"
+SPEC_PATH="$ROOT_DIR/packaging/pyinstaller/android_dpiscaler.spec"
 ARTIFACTS_DIR="$ROOT_DIR/artifacts"
 PYTHON_BIN="${PYTHON_BIN:-python3}"
 

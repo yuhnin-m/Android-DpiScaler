@@ -3,14 +3,14 @@ requires = ["setuptools>=69", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "png2drawable"
+name = "android-dpiscaler"
 dynamic = ["version"]
 description = "Desktop tool for generating Android drawable density variants from raster images"
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
 authors = [
-  { name = "PNG2Drawable Contributors" }
+  { name = "Android DpiScaler Contributors" }
 ]
 keywords = ["android", "drawable", "qt", "pyside", "image", "desktop"]
 classifiers = [
@@ -40,7 +40,7 @@ dev = [
 ]
 
 [project.scripts]
-png2drawable = "main:main"
+android-dpiscaler = "main:main"
 
 [tool.setuptools]
 py-modules = ["main"]
