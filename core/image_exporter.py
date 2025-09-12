@@ -1,4 +1,4 @@
-from PySide6.QtCore import QObject, Signal
+from PySide6.QtCore import QObject, Signal, Slot
 
 from domain.export_models import ExportRequest
 from services.export_service import execute_export
@@ -13,6 +13,7 @@ class ExportWorker(QObject):
         super().__init__()
         self.request = request
 
+    @Slot()
     def run(self):
         try:
             execute_export(self.request, progress_callback=self.progress.emit)

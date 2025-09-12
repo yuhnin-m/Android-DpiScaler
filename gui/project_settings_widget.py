@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 
-from PySide6.QtCore import Qt, QThread
+from PySide6.QtCore import Qt, QThread, Slot
 from PySide6.QtGui import QCloseEvent
 from PySide6.QtWidgets import (
     QFileDialog,
@@ -146,8 +146,8 @@ class ProjectSettingsWidget(QWidget):
         self._scan_worker.moveToThread(self._scan_thread)
 
         self._scan_thread.started.connect(self._scan_worker.run)
-        self._scan_worker.result.connect(self._on_scan_result)
-        self._scan_worker.error.connect(self._on_scan_error)
+        self._scan_worker.result.connect(self._on_scan_result, Qt.QueuedConnection)
+        self._scan_worker.error.connect(self._on_scan_error, Qt.QueuedConnection)
         self._scan_worker.finished.connect(self._scan_thread.quit)
 
         self._scan_thread.finished.connect(self._scan_worker.deleteLater)
@@ -156,6 +156,7 @@ class ProjectSettingsWidget(QWidget):
 
         self._scan_thread.start()
 
+    @Slot(object)
     def _on_scan_result(self, result):
         res_dirs = list(result) if isinstance(result, list) else []
         self.update_res_list(res_dirs)
@@ -175,6 +176,7 @@ class ProjectSettingsWidget(QWidget):
 
         self.scan_status_label.setText(f"Найдено res/ директорий: {len(res_dirs)}")
 
+    @Slot(str)
     def _on_scan_error(self, message: str):
         self.update_res_list([])
         self.selected_res_path.clear()

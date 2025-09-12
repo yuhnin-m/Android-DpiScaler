@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 
-from PySide6.QtCore import QThread
+from PySide6.QtCore import Qt, QThread, Slot
 from PySide6.QtGui import QCloseEvent
 from PySide6.QtWidgets import (
     QHBoxLayout,
@@ -35,6 +35,7 @@ class MainWindow(QMainWindow):
         self.preview_worker = None
         self.export_thread = None
         self.export_worker = None
+        self._active_preview_request = None
 
         self.config = load_config()
         self.init_widgets()
@@ -135,16 +136,15 @@ class MainWindow(QMainWindow):
 
     def _start_preview_job(self, request: ExportRequest):
         self._set_preview_running_ui()
+        self._active_preview_request = request
 
         self.preview_thread = QThread()
         self.preview_worker = FunctionWorker(build_preview_entries, request)
         self.preview_worker.moveToThread(self.preview_thread)
 
         self.preview_thread.started.connect(self.preview_worker.run)
-        self.preview_worker.result.connect(
-            lambda entries, current_request=request: self._on_preview_ready(current_request, entries)
-        )
-        self.preview_worker.error.connect(self._on_preview_error)
+        self.preview_worker.result.connect(self._on_preview_result, Qt.QueuedConnection)
+        self.preview_worker.error.connect(self._on_preview_error, Qt.QueuedConnection)
         self.preview_worker.finished.connect(self.preview_thread.quit)
 
         self.preview_thread.finished.connect(self.preview_worker.deleteLater)
@@ -153,7 +153,13 @@ class MainWindow(QMainWindow):
 
         self.preview_thread.start()
 
-    def _on_preview_ready(self, request: ExportRequest, result):
+    @Slot(object)
+    def _on_preview_result(self, result):
+        request = self._active_preview_request
+        if request is None:
+            self._reset_export_ui()
+            return
+
         preview_entries = list(result) if isinstance(result, list) else []
         if not preview_entries:
             self._reset_export_ui()
@@ -177,6 +183,7 @@ class MainWindow(QMainWindow):
 
         self._start_export_job(request, len(preview_entries))
 
+    @Slot(str)
     def _on_preview_error(self, message: str):
         self._reset_export_ui()
         QMessageBox.critical(self, "Ошибка", f"Не удалось подготовить превью экспорта:\n{message}")
@@ -193,9 +200,9 @@ class MainWindow(QMainWindow):
         self.export_worker = ExportWorker(request)
         self.export_worker.moveToThread(self.export_thread)
 
-        self.export_worker.progress.connect(self.export_settings.progress_bar.setValue)
-        self.export_worker.finished.connect(self.on_conversion_finished)
-        self.export_worker.error.connect(self.on_conversion_error)
+        self.export_worker.progress.connect(self.export_settings.progress_bar.setValue, Qt.QueuedConnection)
+        self.export_worker.finished.connect(self.on_conversion_finished, Qt.QueuedConnection)
+        self.export_worker.error.connect(self.on_conversion_error, Qt.QueuedConnection)
 
         self.export_thread.started.connect(self.export_worker.run)
         self.export_worker.finished.connect(self.export_thread.quit)
@@ -207,6 +214,7 @@ class MainWindow(QMainWindow):
 
         self.export_thread.start()
 
+    @Slot()
     def on_conversion_finished(self):
         self._reset_export_ui()
         self.config["project_path"] = self.project_settings.get_project_path()
@@ -218,6 +226,7 @@ class MainWindow(QMainWindow):
 
         QMessageBox.information(self, "Успех", "Все изображения успешно сохранены.")
 
+    @Slot(str)
     def on_conversion_error(self, message):
         self._reset_export_ui()
         QMessageBox.critical(self, "Ошибка", f"Ошибка при сохранении:\n{message}")
@@ -246,6 +255,7 @@ class MainWindow(QMainWindow):
     def _clear_preview_refs(self):
         self.preview_thread = None
         self.preview_worker = None
+        self._active_preview_request = None
 
     def _clear_export_refs(self):
         self.export_thread = None
