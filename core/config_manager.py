@@ -5,7 +5,7 @@ import sys
 from core.app_metadata import APP_NAME, APP_SLUG
 
 
-# Определяем, куда класть конфиг
+# Determine where the config should be stored.
 def get_config_dir():
     if sys.platform == "darwin":
         return os.path.expanduser(f"~/Library/Application Support/{APP_NAME}")
@@ -47,7 +47,7 @@ def load_config():
         with open(CONFIG_FILE, encoding="utf-8") as f:
             data = json.load(f)
     except Exception as e:
-        print(f"[Config] Ошибка при загрузке конфига: {e}")
+        print(f"[Config] Failed to load config: {e}")
         return DEFAULT_CONFIG.copy()
 
     config = DEFAULT_CONFIG.copy()
@@ -63,4 +63,4 @@ def save_config(config: dict):
         with open(CONFIG_FILE, "w", encoding="utf-8") as f:
             json.dump(config, f, indent=4, ensure_ascii=False)
     except Exception as e:
-        print(f"[Config] Ошибка при сохранении config.json: {e}")
+        print(f"[Config] Failed to save config.json: {e}")

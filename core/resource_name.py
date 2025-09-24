@@ -22,11 +22,11 @@ def sanitize_resource_name(raw_name: str) -> str:
 
 def validate_resource_name(name: str) -> None:
     if not name:
-        raise ValueError("Имя файла не может быть пустым.")
+        raise ValueError("File name cannot be empty.")
 
     separators = [sep for sep in (os.sep, os.altsep) if sep]
     if os.path.isabs(name) or ".." in name or any(sep in name for sep in separators):
-        raise ValueError("Имя файла не должно содержать пути или '..'.")
+        raise ValueError("File name must not contain paths or '..'.")
 
     if not RESOURCE_NAME_PATTERN.fullmatch(name):
-        raise ValueError("Допустимы только строчные буквы, цифры и '_' (начинаться должно с буквы).")
+        raise ValueError("Only lowercase letters, digits, and '_' are allowed (must start with a letter).")

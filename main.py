@@ -24,12 +24,12 @@ def setup_logging(log_path):
     try:
         handler = logging.FileHandler(log_path, mode='a', encoding='utf-8')
     except Exception as e:
-        # fallback в /tmp если что-то пошло не так
+        # Fallback to /tmp if anything goes wrong.
         fallback_log = f"/tmp/{APP_SLUG}_fallback.log"
         handler = logging.FileHandler(fallback_log, mode='a', encoding='utf-8')
         handler.setFormatter(logging.Formatter('%(asctime)s - FATAL - %(message)s'))
         logger.addHandler(handler)
-        logger.critical(f"Ошибка при создании лог-файла: {e}")
+        logger.critical(f"Failed to create log file: {e}")
         return
 
     formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', datefmt='%H:%M:%S')

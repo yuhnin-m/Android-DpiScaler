@@ -17,4 +17,4 @@ class ValidatedLineEdit(QLineEdit):
 
     def _mark_invalid(self):
         self.setStyleSheet("border: 2px solid red; border-radius: 4px;")
-        self.setToolTip("Введите число от 0.1 до 10.0 — это масштаб относительно xxxhdpi")
+        self.setToolTip("Enter a number from 0.1 to 10.0 (scale relative to xxxhdpi)")

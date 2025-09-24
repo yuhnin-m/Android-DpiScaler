@@ -21,23 +21,23 @@ class ExportSettingsWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        # Имя файла
-        self.export_name_label = QLabel("Имя файла:")
+        # File name
+        self.export_name_label = QLabel("File name:")
         self.export_name_input = QLineEdit()
-        self.export_name_input.setPlaceholderText("пример: ic_launcher_foreground")
-        self.export_name_input.setToolTip("Только [a-z0-9_], должно начинаться с буквы.")
+        self.export_name_input.setPlaceholderText("example: ic_launcher_foreground")
+        self.export_name_input.setToolTip("Use [a-z0-9_], must start with a letter.")
 
-        # Пресеты DPI
+        # DPI presets
         self.dpi_widgets = {}
-        dpi_group = QGroupBox("Настройки плотностей DPI")
+        dpi_group = QGroupBox("DPI density settings")
         dpi_layout = QGridLayout()
 
-        # кнопка сбросить
-        self.reset_button = QPushButton("Пресеты по умолчанию")
+        # Reset button
+        self.reset_button = QPushButton("Reset to defaults")
         self.reset_button.clicked.connect(self.reset_defaults)
 
-        # кнопка конвертировать
-        self.convert_button = QPushButton("Сконвертировать")
+        # Convert button
+        self.convert_button = QPushButton("Convert")
         self.convert_button.setStyleSheet("font-weight: bold; font-size: 16px; padding: 10px;")
         self.convert_button.setFixedHeight(40)
 
@@ -62,7 +62,7 @@ class ExportSettingsWidget(QWidget):
             input_field = ValidatedLineEdit()
             input_field.setText(default_value)
             input_field.setFixedWidth(60)
-            input_field.setToolTip("Масштаб относительно xxxhdpi")
+            input_field.setToolTip("Scale relative to xxxhdpi")
 
             row_layout = QHBoxLayout()
             row_layout.addWidget(checkbox)
@@ -74,10 +74,10 @@ class ExportSettingsWidget(QWidget):
 
         dpi_group.setLayout(dpi_layout)
 
-        # Конвертация в WebP
-        self.webp_checkbox = QCheckBox("Конвертировать в WebP")
+        # WebP conversion
+        self.webp_checkbox = QCheckBox("Convert to WebP")
 
-        # Финальный layout
+        # Final layout
         layout = QVBoxLayout()
         layout.addWidget(self.export_name_label)
         layout.addWidget(self.export_name_input)
@@ -100,7 +100,7 @@ class ExportSettingsWidget(QWidget):
         dpi_config = {}
         has_errors = False
         self.export_name_input.setStyleSheet("")
-        self.export_name_input.setToolTip("Только [a-z0-9_], должно начинаться с буквы.")
+        self.export_name_input.setToolTip("Use [a-z0-9_], must start with a letter.")
 
         raw_name = self.export_name_input.text().strip()
         sanitized_name = sanitize_resource_name(raw_name)
@@ -120,10 +120,10 @@ class ExportSettingsWidget(QWidget):
                 try:
                     scale = float(text)
                     if not (0.1 <= scale <= 10.0):
-                        raise ValueError("Масштаб вне допустимого диапазона")
+                        raise ValueError("Scale is out of allowed range")
 
                     dpi_config[dpi] = scale
-                    input_field.setStyleSheet("")  # сброс красной рамки
+                    input_field.setStyleSheet("")  # reset red border
 
                 except Exception:
                     input_field.setStyleSheet("border: 1px solid red;")
@@ -153,7 +153,7 @@ class ExportSettingsWidget(QWidget):
         for dpi, (checkbox, input_field) in self.dpi_widgets.items():
             checkbox.setChecked(True)
             input_field.setText(default_scales.get(dpi, "1.0"))
-            input_field.setStyleSheet("")  # убираем красную рамку, если была
+            input_field.setStyleSheet("")  # clear red border if it was set
 
     def set_presets(self, dpi_values: dict, dpi_enabled: dict):
         for dpi, (checkbox, input_field) in self.dpi_widgets.items():

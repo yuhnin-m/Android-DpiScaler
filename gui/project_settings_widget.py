@@ -34,7 +34,7 @@ class ProjectSettingsWidget(QWidget):
         self.path_label = QLineEdit()
         self.path_label.setReadOnly(True)
 
-        self.choose_button = QPushButton("Выбрать проект")
+        self.choose_button = QPushButton("Select project")
         self.choose_button.clicked.connect(self.select_project)
 
         self.res_list = QListWidget()
@@ -43,26 +43,26 @@ class ProjectSettingsWidget(QWidget):
         self.scan_status_label = QLabel("")
         self.scan_status_label.setStyleSheet("color: #666;")
 
-        self.selected_res_label = QLabel("Выбран текущий путь для сохранения:")
+        self.selected_res_label = QLabel("Current save path:")
         self.selected_res_path = QLineEdit()
         self.selected_res_path.setReadOnly(True)
 
-        # Верхняя строка: [ путь | кнопка ]
+        # Top row: [path | button]
         path_row = QHBoxLayout()
         path_row.addWidget(self.path_label)
         path_row.addWidget(self.choose_button)
 
-        # Левая колонка
+        # Left column
         left_col = QVBoxLayout()
-        left_col.addWidget(QLabel("Путь к Android-проекту:"))
+        left_col.addWidget(QLabel("Android project path:"))
         left_col.addLayout(path_row)
         left_col.addWidget(self.scan_status_label)
         left_col.addWidget(self.selected_res_label)
         left_col.addWidget(self.selected_res_path)
 
-        # Правая колонка
+        # Right column
         right_col = QVBoxLayout()
-        right_col.addWidget(QLabel("Найденные res директории:"))
+        right_col.addWidget(QLabel("Detected res directories:"))
         right_col.addWidget(self.res_list, 0)
 
         left_col.setSpacing(4)
@@ -71,7 +71,7 @@ class ProjectSettingsWidget(QWidget):
         right_col.setSpacing(4)
         right_col.setContentsMargins(0, 0, 0, 0)
 
-        # Итоговая компоновка
+        # Final layout
         layout = QHBoxLayout()
         layout.addLayout(left_col, 1)
         layout.addLayout(right_col, 1)
@@ -80,7 +80,7 @@ class ProjectSettingsWidget(QWidget):
         self.setLayout(layout)
 
     def select_project(self):
-        path = QFileDialog.getExistingDirectory(self, "Выберите папку проекта")
+        path = QFileDialog.getExistingDirectory(self, "Select project folder")
         if not path:
             return
         self.set_project_path(path, show_warning_if_empty=True)
@@ -123,7 +123,7 @@ class ProjectSettingsWidget(QWidget):
             return
 
         if self.is_scanning():
-            QMessageBox.information(self, "Сканирование", "Дождитесь завершения текущего сканирования.")
+            QMessageBox.information(self, "Scanning", "Please wait until the current scan is finished.")
             return
 
         self.project_path = path
@@ -163,9 +163,9 @@ class ProjectSettingsWidget(QWidget):
 
         if not res_dirs:
             self.selected_res_path.clear()
-            self.scan_status_label.setText("res/ директории не найдены")
+            self.scan_status_label.setText("No res/ directories found")
             if self._show_warning_on_empty_scan:
-                QMessageBox.warning(self, "Ошибка", "Не найдены директории res/ в подпапках проекта.")
+                QMessageBox.warning(self, "Error", "No res/ directories found in project subfolders.")
             return
 
         preferred = self._preferred_res_path
@@ -174,19 +174,19 @@ class ProjectSettingsWidget(QWidget):
         else:
             self.res_list.setCurrentRow(0)
 
-        self.scan_status_label.setText(f"Найдено res/ директорий: {len(res_dirs)}")
+        self.scan_status_label.setText(f"Found res/ directories: {len(res_dirs)}")
 
     @Slot(str)
     def _on_scan_error(self, message: str):
         self.update_res_list([])
         self.selected_res_path.clear()
-        self.scan_status_label.setText("Ошибка сканирования")
-        QMessageBox.critical(self, "Ошибка", f"Не удалось просканировать проект:\n{message}")
+        self.scan_status_label.setText("Scan failed")
+        QMessageBox.critical(self, "Error", f"Failed to scan project:\n{message}")
 
     def _set_scan_running_ui(self):
         self.choose_button.setEnabled(False)
         self.res_list.setEnabled(False)
-        self.scan_status_label.setText("Сканирование проекта...")
+        self.scan_status_label.setText("Scanning project...")
 
     def _clear_scan_refs(self):
         self.choose_button.setEnabled(True)

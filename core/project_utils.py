@@ -3,7 +3,7 @@ import os
 
 
 def find_all_res_dirs(project_path: str):
-    logging.info(f"Поиск res/ директорий в: {project_path}")
+    logging.info(f"Searching res/ directories in: {project_path}")
     res_dirs = []
 
     try:
@@ -18,13 +18,13 @@ def find_all_res_dirs(project_path: str):
                     if "build" in parts:
                         build_index = parts.index("build")
                         if build_index + 1 < len(parts) and parts[build_index + 1] == "generated":
-                            logging.info(f"Пропущено (build/generated): {full_path}")
+                            logging.info(f"Skipped (build/generated): {full_path}")
                             continue
 
                     res_dirs.append(full_path)
-                    logging.info(f"Найдена res/ директория: {full_path}")
+                    logging.info(f"Found res/ directory: {full_path}")
     except Exception as error:
-        logging.error(f"Ошибка при поиске res/ директорий: {error}")
+        logging.error(f"Error while searching res/ directories: {error}")
 
-    logging.info(f"Всего найдено: {len(res_dirs)}")
+    logging.info(f"Total found: {len(res_dirs)}")
     return res_dirs

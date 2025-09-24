@@ -35,7 +35,7 @@ class ImageDropWidget(QWidget):
         """)
 
         preview_layout = QStackedLayout(self.preview_container)
-        self.drop_label = QLabel("Перетащите сюда изображение\nили нажмите кнопку выше")
+        self.drop_label = QLabel("Drop an image here\nor click the button above")
         self.drop_label.setAlignment(Qt.AlignCenter)
         self.drop_label.setStyleSheet("color: gray;")
 
@@ -48,8 +48,8 @@ class ImageDropWidget(QWidget):
         preview_layout.addWidget(self.preview)
         preview_layout.setCurrentWidget(self.drop_label)
 
-        # === Метаданные о картинке ===
-        self.meta_label = QLabel("Здесь будет информация о файле:\n")
+        # === image metadata ===
+        self.meta_label = QLabel("File info will appear here:\n")
         self.meta_label.setAlignment(Qt.AlignTop)
         self.meta_label.setWordWrap(True)
 
@@ -69,8 +69,8 @@ class ImageDropWidget(QWidget):
         meta_layout.addWidget(self.meta_label)
         self.meta_container.setLayout(meta_layout)
 
-        # === кнопка открыть файл ===
-        self.button = QPushButton("Выбрать файл")
+        # === open file button ===
+        self.button = QPushButton("Select file")
         self.button.clicked.connect(self.open_file_dialog)
 
         # === final layout ===
@@ -78,14 +78,14 @@ class ImageDropWidget(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         # layout.setSpacing(8)
         layout.addWidget(self.button)
-        layout.addWidget(self.preview_container, 1)  # тянется
-        layout.addWidget(self.meta_container, 0)     # внизу
+        layout.addWidget(self.preview_container, 1)  # expandable
+        layout.addWidget(self.meta_container, 0)     # at the bottom
 
         self.setLayout(layout)
 
     def open_file_dialog(self):
         path, _ = QFileDialog.getOpenFileName(
-            self, "Выберите изображение", "", "Изображения (*.png *.jpg *.jpeg *.webp)"
+            self, "Select image", "", "Images (*.png *.jpg *.jpeg *.webp)"
         )
         if path:
             self.set_image(path)
@@ -116,7 +116,7 @@ class ImageDropWidget(QWidget):
             self.image_path = path
             self.image_loaded.emit(path)
         else:
-            self.meta_label.setText("Ошибка загрузки изображения.")
+            self.meta_label.setText("Failed to load image.")
 
     def get_image_info(self, path):
         try:
@@ -126,11 +126,11 @@ class ImageDropWidget(QWidget):
             fmt = reader.format().data().decode('utf-8').upper()
             name = os.path.basename(path)
             return (
-                f"<b>Путь:</b>\n{path}<br>"
-                f"<b>Имя файла:</b> {name}<br>"
-                f"<b>Размер:</b> {size_px.width()}x{size_px.height()} px<br>"
-                f"<b>Формат:</b> {fmt}<br>"
-                f"<b>Объём:</b> {size_kb:.1f} KB"
+                f"<b>Path:</b>\n{path}<br>"
+                f"<b>File name:</b> {name}<br>"
+                f"<b>Size:</b> {size_px.width()}x{size_px.height()} px<br>"
+                f"<b>Format:</b> {fmt}<br>"
+                f"<b>File size:</b> {size_kb:.1f} KB"
             )
         except Exception as e:
-            return f"Ошибка чтения файла: {e}"
+            return f"Failed to read file: {e}"

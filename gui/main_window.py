@@ -51,9 +51,9 @@ class MainWindow(QMainWindow):
         self.image_drop.image_loaded.connect(self.export_settings.set_suggested_name)
 
     def init_layout(self):
-        step1_title = QLabel("<b>ШАГ 1. Настройка проекта</b>")
-        step2_title = QLabel("<b>ШАГ 2. Исходное изображение</b>")
-        step3_title = QLabel("<b>ШАГ 3. Настройки экспорта изображения</b>")
+        step1_title = QLabel("<b>STEP 1. Project Setup</b>")
+        step2_title = QLabel("<b>STEP 2. Source Image</b>")
+        step3_title = QLabel("<b>STEP 3. Export Settings</b>")
 
         step1_layout = QVBoxLayout()
         step1_layout.addWidget(step1_title)
@@ -73,9 +73,9 @@ class MainWindow(QMainWindow):
         step3_layout.addWidget(self.export_settings)
         step3_layout.setStretch(1, 0)
 
-        step1_frame = wrap_with_frame(self.project_settings, "step1_frame", "ШАГ 1. Настройка проекта")
-        step2_frame = wrap_with_frame(self.image_drop, "step2_frame", "ШАГ 2. Исходное изображение")
-        step3_frame = wrap_with_frame(self.export_settings, "step3_frame", "ШАГ 3. Настройки экспорта изображения")
+        step1_frame = wrap_with_frame(self.project_settings, "step1_frame", "STEP 1. Project Setup")
+        step2_frame = wrap_with_frame(self.image_drop, "step2_frame", "STEP 2. Source Image")
+        step3_frame = wrap_with_frame(self.export_settings, "step3_frame", "STEP 3. Export Settings")
 
         step_2_3_layout = QHBoxLayout()
         step_2_3_layout.setContentsMargins(0, 0, 0, 0)
@@ -100,28 +100,28 @@ class MainWindow(QMainWindow):
 
     def on_convert_clicked(self):
         if self.project_settings.is_scanning():
-            QMessageBox.information(self, "Сканирование", "Дождитесь завершения сканирования проекта.")
+            QMessageBox.information(self, "Scanning", "Please wait until project scanning is finished.")
             return
 
         if self._is_busy():
-            QMessageBox.warning(self, "Подождите", "Операция уже выполняется.")
+            QMessageBox.warning(self, "Please wait", "An operation is already running.")
             return
 
         if not self.image_drop.image_path:
-            QMessageBox.warning(self, "Ошибка", "Сначала выберите изображение.")
+            QMessageBox.warning(self, "Error", "Please select an image first.")
             return
 
         base_res_path = self.project_settings.get_selected_res_path()
         if not base_res_path:
-            QMessageBox.warning(self, "Ошибка", "Не выбран путь res/ для сохранения.")
+            QMessageBox.warning(self, "Error", "No res/ output path selected.")
             return
 
         config = self.export_settings.get_export_config()
         if config is None:
             QMessageBox.warning(
                 self,
-                "Ошибка",
-                "Проверьте имя файла, значения масштабов DPI и выберите хотя бы один DPI.",
+                "Error",
+                "Check file name, DPI scale values, and enable at least one DPI target.",
             )
             return
 
@@ -163,7 +163,7 @@ class MainWindow(QMainWindow):
         preview_entries = list(result) if isinstance(result, list) else []
         if not preview_entries:
             self._reset_export_ui()
-            QMessageBox.warning(self, "Ошибка", "Не удалось подготовить данные для предпросмотра.")
+            QMessageBox.warning(self, "Error", "Failed to prepare preview data.")
             return
 
         preview_lines = [
@@ -172,8 +172,8 @@ class MainWindow(QMainWindow):
         ]
 
         msg = QMessageBox(self)
-        msg.setWindowTitle("Подтвердите сохранение")
-        msg.setText("Будут созданы следующие файлы:\n\n" + "\n".join(preview_lines))
+        msg.setWindowTitle("Confirm export")
+        msg.setText("The following files will be created:\n\n" + "\n".join(preview_lines))
         msg.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
         result_code = msg.exec()
 
@@ -186,11 +186,11 @@ class MainWindow(QMainWindow):
     @Slot(str)
     def _on_preview_error(self, message: str):
         self._reset_export_ui()
-        QMessageBox.critical(self, "Ошибка", f"Не удалось подготовить превью экспорта:\n{message}")
+        QMessageBox.critical(self, "Error", f"Failed to prepare export preview:\n{message}")
 
     def _start_export_job(self, request: ExportRequest, total_steps: int):
         if self._is_export_running():
-            QMessageBox.warning(self, "Подождите", "Экспорт уже выполняется.")
+            QMessageBox.warning(self, "Please wait", "Export is already running.")
             self._reset_export_ui()
             return
 
@@ -224,19 +224,19 @@ class MainWindow(QMainWindow):
         self.config["webp"] = self.export_settings.is_webp_enabled()
         save_config(self.config)
 
-        QMessageBox.information(self, "Успех", "Все изображения успешно сохранены.")
+        QMessageBox.information(self, "Success", "All images were saved successfully.")
 
     @Slot(str)
     def on_conversion_error(self, message):
         self._reset_export_ui()
-        QMessageBox.critical(self, "Ошибка", f"Ошибка при сохранении:\n{message}")
+        QMessageBox.critical(self, "Error", f"Error while saving:\n{message}")
 
     def _set_preview_running_ui(self):
         self.export_settings.convert_button.setEnabled(False)
         self.export_settings.progress_bar.setVisible(True)
         self.export_settings.status_label.setVisible(True)
         self.export_settings.progress_bar.setRange(0, 0)
-        self.export_settings.status_label.setText("Подготовка превью...")
+        self.export_settings.status_label.setText("Preparing preview...")
 
     def _set_export_running_ui(self, total_steps: int):
         self.export_settings.convert_button.setEnabled(False)
@@ -244,7 +244,7 @@ class MainWindow(QMainWindow):
         self.export_settings.status_label.setVisible(True)
         self.export_settings.progress_bar.setRange(0, max(total_steps, 1))
         self.export_settings.progress_bar.setValue(0)
-        self.export_settings.status_label.setText("Конвертация...")
+        self.export_settings.status_label.setText("Exporting...")
 
     def _reset_export_ui(self):
         self.export_settings.convert_button.setEnabled(True)

@@ -17,10 +17,10 @@ def get_resized_image_preview_info(
     path: str,
 ) -> tuple[str, tuple[int, int], float]:
     """
-    Возвращает информацию о ресайзнутом изображении:
-    - путь
-    - размер (width, height)
-    - примерный вес в килобайтах
+    Return preview metadata for a resized image:
+    - output path
+    - dimensions (width, height)
+    - approximate size in kilobytes
     """
     new_w, new_h = get_scaled_dimensions(image.size, scale)
 
