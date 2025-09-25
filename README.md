@@ -1,16 +1,40 @@
 # Android DpiScaler
+<p align="center">
+  <img src="ic_dpi_scaler.png" alt="Android DpiScaler logo" width="128"/>
+</p>
+Android DpiScaler — десктопный инструмент для генерации Android drawable-ресурсов из одного изображения.
 
-Android DpiScaler is a desktop tool for Android developers.
-It takes a source raster image and generates drawable variants for Android density buckets (`mdpi`, `hdpi`, `xhdpi`, `xxhdpi`, `xxxhdpi`).
+Бросаешь картинку (как правило, в качестве исходника используется `xxxhdpi`). Инструмент сам создаёт все density-варианты (`mdpi`, `hdpi`, `xhdpi`, `xxhdpi`, `xxxhdpi`) и автоматически раскладывает их по соответствующим `res/drawable-*` папкам.
 
-## What it does
-- Select Android project folder
-- Detect available `res/` directories
-- Drag-and-drop or choose an image file
-- Configure density scales and output format (`PNG` / `WebP`)
-- Generate `drawable-*` assets
+## ⚠️ Важно
 
-## Quick start (source)
+Рекомендуется использовать исходник в `xxxhdpi`:
+- это обеспечивает достаточное качество при масштабировании вниз  
+- снижает риск артефактов и размытия на устройствах с высокой плотностью  
+- позволяет корректно сформировать все остальные `drawable-*` ресурсы  
+
+
+
+## Preview
+<p align="center">
+  <img src="docs/preview.png" alt="App preview" width="800"/>
+</p>
+
+## Возможности
+* Автоматически находит `res/` директории проекта  
+* Drag-and-drop или выбор файла  
+* Генерация всех density-вариантов
+* Запись и создание файлов
+* Поддержка `PNG` и `WebP`  
+
+## Зачем это
+Чтобы не делать руками:
+* ресайз одной и той же картинки 5 раз  
+* раскладку по `drawable-*` папкам  
+* проверку, не забыл ли `xxhdpi`  
+
+## Быстрый старт
+
 ```bash
 python -m venv .venv
 source .venv/bin/activate  # Windows: .venv\Scripts\activate
@@ -19,33 +43,24 @@ pip install -e .
 python main.py
 ```
 
-## Requirements
-- Python 3.11+
-- macOS / Windows / Linux
+## Сборка
 
-## Build standalone packages
-Install dev dependencies first:
 ```bash
 pip install -r requirements-dev.txt
 pip install -e .
 ```
 
-Build scripts:
-- macOS: `bash packaging/scripts/build_macos.sh`
-- Linux: `bash packaging/scripts/build_linux.sh`
-- Windows (PowerShell): `./packaging/scripts/build_windows.ps1`
+* macOS: bash packaging/scripts/build_macos.sh
+* Linux: bash packaging/scripts/build_linux.sh
+* Windows: ./packaging/scripts/build_windows.ps1
 
-Artifacts are created in `artifacts/`.
+Артефакты: artifacts/
 
-## Project status
-Current status: pre-release (alpha).
-The app is functional, but active refactoring is in progress before first public release.
+## Требования
 
-## Contributing
-Please read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a PR.
+* Python 3.11+
+* macOS / Windows / Linux
 
-## Security
-See [SECURITY.md](SECURITY.md).
+## Лицензия
 
-## License
-MIT, see [LICENSE](LICENSE).
+MIT — см. LICENSE
