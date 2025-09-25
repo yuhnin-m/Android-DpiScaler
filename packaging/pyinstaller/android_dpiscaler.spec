@@ -10,7 +10,7 @@ if str(PROJECT_ROOT) not in sys.path:
 from core.app_metadata import APP_NAME, BUNDLE_IDENTIFIER
 
 MAIN_SCRIPT = PROJECT_ROOT / "main.py"
-ICON_PATH = PROJECT_ROOT / ("icon.icns" if sys.platform == "darwin" else "icon.png")
+ICON_PATH = PROJECT_ROOT / ("ic_dpi_scaler.icns" if sys.platform == "darwin" else "ic_dpi_scaler.png")
 
 
 a = Analysis(
