@@ -18,15 +18,12 @@ jobs:
         include:
           - os: ubuntu-latest
             artifact_name: linux
-            shell: bash
             build_cmd: bash packaging/scripts/build_linux.sh
           - os: macos-latest
             artifact_name: macos
-            shell: bash
             build_cmd: bash packaging/scripts/build_macos.sh
           - os: windows-latest
             artifact_name: windows
-            shell: pwsh
             build_cmd: ./packaging/scripts/build_windows.ps1
 
     steps:
@@ -46,7 +43,6 @@ jobs:
           python -m pip check
 
       - name: Build artifact
-        shell: ${{ matrix.shell }}
         run: ${{ matrix.build_cmd }}
 
       - name: Upload artifact bundle
