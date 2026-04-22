@@ -22,8 +22,8 @@ def test_build_export_targets_and_preview_do_not_create_output_dirs(tmp_path: Pa
 
     targets = build_export_targets(request)
     assert len(targets) == 2
-    assert targets[0].output_path.endswith("drawable-mdpi/ic_launcher.png")
-    assert targets[1].output_path.endswith("drawable-xhdpi/ic_launcher.png")
+    assert Path(targets[0].output_path).as_posix().endswith("drawable-mdpi/ic_launcher.png")
+    assert Path(targets[1].output_path).as_posix().endswith("drawable-xhdpi/ic_launcher.png")
 
     previews = build_preview_entries(request)
     assert len(previews) == 2
