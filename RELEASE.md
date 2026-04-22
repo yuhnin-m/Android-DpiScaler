@@ -22,6 +22,9 @@ git push origin vX.Y.Z
   - `packaging/scripts/build_linux.sh`
   - `packaging/scripts/build_windows.ps1`
 - CI publishes a GitHub Release with generated release notes and `SHA256SUMS`.
+- macOS release artifacts are produced as two `.dmg` files:
+  - `android_dpiscaler-macos-arm64.dmg`
+  - `android_dpiscaler-macos-x64.dmg`
 
 ## 5. Post-release
 - Open next `Unreleased` section in `CHANGELOG.md`.
